@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/digital-empathy-platform/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-14T11:30:59.301Z",
+      "trigger": "initial",
+      "approvalId": "approval_1763119859298_jeymmvwlm",
+      "approvalTitle": "Approve design for digital-empathy-platform"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+# Requirements Document
+
+## Introduction
+
+数字共情平台（Digital Empathy Platform）旨在构建一个“社会情绪雷达 + 文本过滤”一体化系统，围绕教学演示、研究分析与内容治理等场景，提供事件级情绪洞察、文本实时标注、危机预警与可视化展示能力。该系统需要支撑 REST API、WebSocket、可视化 Dashboard 以及后台治理工具，确保“事件 → 情绪动态 → 风险告警”的全链路可观测性与可操作性。
+
+## Alignment with Product Vision
+
+Master Plan 中提出“可落地、可扩展、可演示”的目标，本方案通过统一的 FastAPI 网关、可组合的服务层与前端 Dashboard/Chat/Search 三大入口，满足可复用 API、课堂 Demo 及研究扩展的愿景。所有需求均锚定文档中对情绪识别精度、响应时延、并发能力与合规治理的量化指标，并确保为后续 Demo、集成与运营提供可追溯的系统基座。
+
+## Requirements
+
+### Requirement 1 · 社会情绪雷达 Dashboard
+
+**User Story:** 作为一名运营/研究人员，我希望输入事件关键词即可快速查看情绪演化、风险摘要与代表语句，从而高效生成报告或完成课堂演示。
+
+#### Acceptance Criteria
+
+1. WHEN 用户输入关键词与时间窗 THEN 系统 SHALL 触发 `/api/analyze_event` 并在 5 s 内返回折线图、环形图与典型语句。
+2. IF 分析结果包含危机级别数据 THEN 平台 SHALL 在 UI 中突出显示并附带风险摘要。
+3. WHEN 用户点击导出按钮 AND 分析完成 THEN 系统 SHALL 生成 CSV/图表文件并在 2 s 内提供下载。
+
+### Requirement 2 · 在线情绪分析与过滤 API
+
+**User Story:** 作为内容审核员，我希望提交单条或批量文本后能获得情绪标签、共情得分与过滤建议，以便快速决策阻断、人工复核或持续监测。
+
+#### Acceptance Criteria
+
+1. WHEN 客户端调用 `POST /api/analyze_text` with `text` THEN 服务 SHALL 返回标签、共情评分、危机概率与证据字段且单条延迟 < 300 ms。
+2. IF 文本命中过滤规则或模型高风险 THEN `/api/filter` SHALL 返回 `allow=false`、命中规则 ID、建议动作与日志 ID。
+3. WHEN 规则或模型版本更新 AND API 接口被调用 THEN 响应 SHALL 附带当前模型/规则版本并写入审计日志。
+
+### Requirement 3 · WebSocket 实时聊天与标注
+
+**User Story:** 作为教学演示者，我需要在实时聊天中展示多位用户消息并即时标记情绪/危机标签，以证明系统具备实时监控与警示能力。
+
+#### Acceptance Criteria
+
+1. WHEN 客户端连接 `/ws/chat` AND 提供房间/用户 ID THEN 服务 SHALL 建立会话、返回最近 20 条消息及其标签。
+2. WHEN 任意用户发送消息 THEN 系统 SHALL 在 1 s 内广播带情绪标签、置信度与风险高亮标记的 JSON。
+3. IF 单用户速率超过阈值 (e.g., 5 msg/s) THEN WebSocket 服务 SHALL 触发速率限制并提示原因。
+
+### Requirement 4 · 事件搜索与知识回溯
+
+**User Story:** 作为研究人员，我想通过关键词检索历史事件并查看情绪分布、风险等级与代表语句，以便制定策略或对比趋势。
+
+#### Acceptance Criteria
+
+1. WHEN 用户调用 `/api/search?keyword=` THEN 系统 SHALL 返回分页结果，每条含情绪分布、风险等级、时间窗口与代表语句。
+2. IF 搜索结果为空 THEN 系统 SHALL 返回空结果与建议关键词，同时记录查询日志用于运维分析。
+3. WHEN 用户请求导出或者切换排序 (热度/风险) THEN API SHALL 按要求返回排序后列表或生成 CSV。
+
+## Non-Functional Requirements
+
+### Code Architecture and Modularity
+- 保持 FastAPI 网关、服务编排、核心 NLP 模块、数据访问层分别独立；每个模块遵循单一职责。
+- 前端采用模块化组件（Dashboard/Chat/Search）与共享状态管理，避免交叉耦合。
+- 规则引擎、模型服务与数据访问通过清晰接口交互，便于测试与热更新。
+
+### Performance
+- `POST /api/analyze_text` 单条推理 < 300 ms；事件分析 < 5 s；WebSocket 广播延迟 < 1 s。
+- 支持 ≥ 100 并发 WebSocket 连接，后端提供水平扩展策略（多 worker + Redis Pub/Sub 可选）。
+- 批量分析接口需具备限流与异步处理机制，避免阻塞单实例。
+
+### Security
+- 所有 API 需支持 API Key 鉴权，预留 JWT/OAuth 扩展；WebSocket 连接需校验 token 与速率。
+- 日志与存储层对用户标识进行脱敏/哈希处理，敏感字段加密存储。
+- 规则/模型热更新必须写入审计日志，并提供审批记录。
+
+### Reliability
+- 模型/规则版本化并支持自动回滚；接口需暴露 `/health` 与 `/metrics` 供监控。
+- Docker 化部署 + GitHub Actions CI，保证 lint/test 通过后才可发布。
+- 关键模块测试覆盖率 ≥ 80%，并包含 WebSocket/事件分析路径的回归测试。
+
+### Usability
+- Dashboard/Chat/Search 三页需统一视觉与暗色主题；支持键盘操作与清晰的 loading/error 状态。
+- 提供导出、主题切换与响应式布局，确保课堂大屏与移动端均可用。
+- Swagger/Redoc 文档需完善，附带示例与错误码说明，便于开发者集成。

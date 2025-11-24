@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      DATABASE__URL: postgresql+asyncpg://dep_user:dep_pass@db:5432/dep
+      DATABASE__POOL_SIZE: 5
+      DATABASE__MAX_OVERFLOW: 5
+      REDIS_URL: redis://redis:6379/0
+      SECURITY__API_KEY: demo-key
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ../frontend
+    depends_on:
+      - api
+    ports:
+      - "4173:80"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: dep
+      POSTGRES_USER: dep_user
+      POSTGRES_PASSWORD: dep_pass
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  db_data:

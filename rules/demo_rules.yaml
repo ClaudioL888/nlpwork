@@ -1,0 +1,23 @@
+rules:
+  - id: CRISIS_LANGUAGE
+    description: Flag crisis-related vocabulary with high severity
+    action: escalate
+    severity: high
+    tags: [crisis, harm]
+    patterns:
+      - type: contains
+        value: "suicide"
+      - type: contains
+        value: "kill myself"
+      - type: regex
+        value: '(self\s*h[ai]rm)'
+  - id: HATE_SPEECH
+    description: Flag hate or harassment phrases
+    action: review
+    severity: medium
+    tags: [harassment]
+    patterns:
+      - type: contains
+        value: "hate you"
+      - type: contains
+        value: "废物"

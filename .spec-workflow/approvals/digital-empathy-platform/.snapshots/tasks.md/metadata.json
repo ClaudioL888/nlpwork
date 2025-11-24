@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/digital-empathy-platform/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-14T11:32:58.558Z",
+      "trigger": "initial",
+      "approvalId": "approval_1763119978553_dewapup3g",
+      "approvalTitle": "Approve tasks for digital-empathy-platform"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "demo-sentiment",
+  "version": "1.0.0",
+  "labels": ["positive", "neutral", "negative"],
+  "keywords": {
+    "positive": ["great", "love", "awesome", "good", "开心", "感激"],
+    "negative": ["hate", "angry", "terrible", "bad", "伤心", "愤怒"]
+  }
+}

@@ -1,0 +1,92 @@
+# Tasks Document
+
+- [x] 1. Bootstrap backend project layout and config
+  - Files: `src/api/__init__.py`, `src/api/routers/__init__.py`, `src/config/settings.py`, `alembic/`
+  - Actions: scaffold settings (API keys, DB/Redis, model/Rule paths), configure logging (structlog) and dependency wiring, add Alembic base migration for `analysis_logs`, `filter_audits`, `event_snapshots`, `chat_messages`.
+  - Purpose: provide consistent FastAPI startup + persistence baseline for all downstream tasks.
+  - _Requirements: Non-Functional – Architecture, Reliability_
+  - _Prompt: Role: Backend architect | Task: initialize FastAPI config + DB migrations per design, ensuring single responsibility between API routers, services, data access | Constraints: keep env vars `.env.example`, respect async SQLAlchemy patterns | Success: app boots, DB migrations create core tables._
+
+- [x] 2. Implement NLP pipeline + model registry
+  - Files: `src/core/nlp/pipeline.py`, `src/core/nlp/model_registry.py`, `src/core/nlp/rule_matcher.py`, `models/<name>/<version>/manifest.json`
+  - Actions: wrap Transformers classifier, empathy scorer, crisis detector, add caching of loaded models, rule matcher that loads YAML/JSON with hot-reload hooks and audit logging.
+  - Purpose: shared inference backbone for Analyzer, Filter, and Chat flows.
+  - _Requirements: Requirement 2, Requirement 3, Non-Functional – Performance/Security_
+  - _Prompt: Role: NLP engineer | Task: build reusable `SentimentClassifier`, `EmpathyScorer`, `CrisisDetector`, `RuleMatcher` classes with async-safe inference & fallbacks | Constraints: inference latency budget, provide instrumentation + version metadata | Success: pipeline returns deterministic DTO + benchmark hooks._
+
+- [x] 3. Build AnalyzerService + REST endpoint `/api/analyze_text`
+  - Files: `src/services/analyzer.py`, `src/api/routers/analyze.py`, `src/schemas/analyze.py`, `tests/services/test_analyzer.py`
+  - Actions: implement service method orchestrating NLP pipeline, evidence extraction, logging; create Pydantic schemas; expose POST endpoint with latency metrics and error handling.
+  - Purpose: satisfy Requirement 2 (单条文本分析) and provide building block for Filter & Chat modules.
+  - _Requirements: Requirement 2, Requirement 3_
+  - _Prompt: Role: FastAPI developer | Task: wire analyzer service + endpoint following design layering, ensure <300 ms target by reusing pipeline and async I/O | Constraints: no DB writes on happy path except log repository; include request_id in response | Success: endpoint passes service + integration tests._
+
+- [x] 4. Implement FilterService + `/api/filter`
+  - Files: `src/services/filter.py`, `src/api/routers/filter.py`, `src/schemas/filter.py`, `src/data/filter_audit_repo.py`
+  - Actions: combine AnalyzerService result with rule engine, compute allow/deny decision, write filter audit record with model+rule versions and recommendation; expose POST endpoint with structured errors.
+  - Purpose: deliver审核流程、日志与建议动作，满足 Requirement 2。
+  - _Requirements: Requirement 2, Non-Functional – Security/Reliability_
+  - _Prompt: Role: Trust & Safety backend engineer | Task: implement decision engine + persistence with audit logging and rate limiting | Constraints: ensure atomic DB write, include trace IDs, follow ERR code format | Success: tests verify deny/review flows and log content._
+
+- [x] 5. EventAnalyzerService + `/api/analyze_event`
+  - Files: `src/services/event_analyzer.py`, `src/api/routers/event.py`, `src/core/graph/builder.py`, `src/schemas/event.py`
+  - Actions: query logs/snapshots by keyword/time window, aggregate emotion timelines, compute crisis summaries, produce representative quotes, build NetworkX graph payload, support export artifacts.
+  - Purpose: power Dashboard情绪雷达（Requirement 1）并提供导出能力。
+  - _Requirements: Requirement 1_
+  - _Prompt: Role: Data engineer | Task: implement aggregation pipeline using pandas/SQL, integrate GraphBuilder per design | Constraints: respond <5 s, store cached results, handle empty datasets | Success: endpoint returns structured insight + coverage tests._
+
+- [x] 6. SearchService + `/api/search`
+  - Files: `src/services/search.py`, `src/api/routers/search.py`, `src/schemas/search.py`, `src/data/search_repo.py`
+  - Actions: implement keyword search + pagination/sorting across event snapshots/logs, return emotion distribution and representative sentences, support CSV export route.
+  - Purpose: enable Requirement 4 事件搜索与知识回溯。
+  - _Requirements: Requirement 4_
+  - _Prompt: Role: Backend developer | Task: create DAO queries or full-text integration, support `sort=heat|risk`, return suggestions on zero results | Constraints: safe query building, log queries for analytics | Success: integration tests cover pagination + export._
+
+- [x] 7. WebSocket ChatGateway `/ws/chat`
+  - Files: `src/api/routers/chat.py`, `src/services/chat_gateway.py`, `src/schemas/chat.py`, `src/core/rate_limit.py`
+  - Actions: manage connections, enforce token/rate limit, analyze each message via AnalyzerService, broadcast enriched payload, persist last 20 messages per room, optionally use Redis Pub/Sub.
+  - Purpose: satisfy Requirement 3（实时聊天 + 标签 + 限流）。
+  - _Requirements: Requirement 3_
+  - _Prompt: Role: Realtime systems engineer | Task: create resilient WebSocket manager with reconnect, history fetch, analytics | Constraints: <1 s latency, JSON error frames, tests using WebSocket client | Success: integration test simulating multi-user rooms passes._
+
+- [x] 8. Frontend shared infrastructure
+  - Files: `frontend/src/api/client.ts`, `frontend/src/store/appState.ts`, `frontend/src/components/common/{LoadingState.tsx,ErrorBanner.tsx}`, `frontend/src/styles/theme.css`
+  - Actions: set up Axios client with API key injection, WebSocket hook, Zustand/Context store for shared filters + theme, base components for loading/error, theme tokens for dark mode.
+  - Purpose: ensure Dashboard/Chat/Search 复用一致的通信与 UI 基础。
+  - _Requirements: Non-Functional – Usability, Requirement 1-4 support_
+  - _Prompt: Role: Frontend platform engineer | Task: create reusable API + state utilities and base UI for alerts/loading per design | Constraints: TypeScript strict mode, accessible semantics | Success: components imported by feature pages without duplication._
+
+- [x] 9. Implement DashboardPage
+  - Files: `frontend/src/pages/DashboardPage.tsx`, `frontend/src/components/dashboard/{KeywordForm.tsx,EmotionTrendChart.tsx,RiskSummaryCard.tsx,RepresentativeQuotes.tsx}`, `frontend/src/hooks/useEventAnalysis.ts`
+  - Actions: connect to `/api/analyze_event`, show charts (Chart.js) for emotion series, risk summary, quotes, export buttons, theme toggle.
+  - Purpose: deliver Requirement 1 的 UI 体验。
+  - _Requirements: Requirement 1_
+  - _Prompt: Role: Frontend engineer | Task: implement responsive dashboard with loading/error states and export actions | Constraints: handle long requests with progress state, ensure charts accessible | Success: manual QA matches demo script._
+
+- [x] 10. Implement ChatPage
+  - Files: `frontend/src/pages/ChatPage.tsx`, `frontend/src/components/chat/{MessageList.tsx,Composer.tsx,UserBadge.tsx}`, `frontend/src/hooks/useChatSocket.ts`
+  - Actions: manage WebSocket lifecycle, display messages with sentiment badges + crisis highlight, support username entry + rate-limit feedback, show connection status.
+  - Purpose: fulfill Requirement 3 的课堂演示场景。
+  - _Requirements: Requirement 3_
+  - _Prompt: Role: Realtime frontend engineer | Task: build chat UI hooking into WebSocket hook, highlight high-risk messages, show history | Constraints: mobile-friendly, handle disconnect/retry, colorblind-safe palette | Success: QA script verifies <1s tag update._
+
+- [x] 11. Implement SearchPage
+  - Files: `frontend/src/pages/SearchPage.tsx`, `frontend/src/components/search/{SearchBar.tsx,ResultCard.tsx,Pagination.tsx,ResultFilters.tsx}`, `frontend/src/hooks/useSearch.ts`
+  - Actions: call `/api/search`, render result cards with emotion distribution, risk level, quote snippet; add sort/filter controls, CSV export button, empty-state suggestions.
+  - Purpose: deliver Requirement 4 前端体验。
+  - _Requirements: Requirement 4_
+  - _Prompt: Role: Frontend engineer | Task: build search UI with pagination + export, integrate with shared store/theme | Constraints: maintain performance for large result sets, accessible keyboard nav | Success: Cypress E2E passes search scenarios._
+
+- [ ] 12. Observability, security, and ops plumbing
+  - Files: `src/middleware/logging.py`, `src/middleware/metrics.py`, `src/security/auth.py`, `deploy/docker-compose.yml`, `docs/ops/runbook.md`
+  - Actions: instrument requests/WS with structlog + Prometheus metrics, enforce API key middleware + token validation, add rate limiting, create Docker Compose stack with API/DB/Redis/frontend + monitoring, document runbook (health checks, rollback).
+  - Purpose: guarantee安全性、可运维性、Demo 部署体验。
+  - _Requirements: Non-Functional – Security/Reliability_
+  - _Prompt: Role: SRE | Task: implement middleware + deployment assets aligning with Master Plan SLAs | Constraints: zero-trust defaults, include alerts, document env vars | Success: `docker-compose up` runs stack, metrics visible, docs updated._
+
+- [x] 13. Testing suite
+  - Files: `tests/unit/test_pipeline.py`, `tests/unit/test_rule_matcher.py`, `tests/integration/test_api_endpoints.py`, `tests/integration/test_websocket.py`, `frontend/tests/e2e/dashboard.spec.ts`, `frontend/tests/e2e/chat.spec.ts`, `frontend/tests/e2e/search.spec.ts`
+  - Actions: cover NLP pipeline, services, repositories, REST endpoints via HTTPX, WebSocket multi-client flow, front-end flows using Playwright/Cypress; include performance smoke tests (locust/k6 scripts under `tests/perf/`).
+  - Purpose: 确保质量指标并支撑 CI/CD。
+  - _Requirements: All requirements + Non-Functional Testing targets_
+  - _Prompt: Role: QA lead | Task: author multi-layer tests + CI scripts, ensure ≥80% coverage on critical modules, add fixtures + mocking for deterministic outputs | Constraints: tests parallelizable, CI-friendly, include instrumentation for latency budgets | Success: CI pipeline green with coverage & performance artifacts._
