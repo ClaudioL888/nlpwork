@@ -3,10 +3,10 @@
 FastAPI + React/Vite 的情绪/危机识别与实时演示平台，支持关键词启发式与可选 LLM（GPT-4o 兼容接口）判定，内置 Dashboard / Search / Chat 三大前端入口以及过滤、事件聚合、监控能力。
 
 ## 功能概览
-- REST：`/api/analyze_text`、`/api/filter`、`/api/analyze_event`、`/api/search`
+- REST：`/api/analyze_text`、`/api/filter`、`/api/analyze_event`、`/api/search`、`/api/suggest_keywords`
 - WebSocket：`/ws/chat` 实时打标签并存储聊天记录
-- Dashboard：事件关键词情绪曲线、危机摘要、代表语句
-- Search：快照检索/分页/排序
+- Dashboard：事件关键词情绪曲线、危机摘要、代表语句（Tab 切换后状态保留，默认 24h 窗口）
+- Search：快照检索/分页/排序，模糊匹配关键词与代表语句；LLM 生成关键词供检索更丰富
 - Chat：房间内消息情绪/风险实时展示
 - Observability：结构化日志 + Prometheus `/metrics`（Grafana 可接入）
 - 可选 LLM：调用第三方 GPT-4o API 提升情绪/危机判定，失败时回退关键词模型
@@ -29,6 +29,8 @@ npm run dev -- --host 0.0.0.0 --port 5173  # dev 代理 /api /ws 到 8000
 localStorage.setItem('dep_api_key', 'demo-key');
 ```
 刷新后即可请求后端。
+
+> 如果需要 LLM 关键词建议/种子数据，请确保 `.env` 中配置了 `LLM__BASE_URL`、`LLM__API_KEY`、`LLM__MODEL`，并可调整 `LLM__TIMEOUT_SECONDS`（默认 12）。
 
 ## Docker Compose（一键栈：API/前端/Postgres/Redis/Prometheus/Grafana）
 ```bash
@@ -61,12 +63,14 @@ python -m scripts.seed_demo_data
   - `LLM__BASE_URL=https://api.cursorai.art/v1`  
   - `LLM__API_KEY=<你的密钥>`  
   - `LLM__MODEL=gpt-4o-mini`  
+  - `LLM__TIMEOUT_SECONDS=12`
 
 ## 关键接口
 - `POST /api/analyze_text`：单条情绪/危机分析
 - `POST /api/filter`：内容过滤 + 审计
 - `POST /api/analyze_event`：按关键词聚合情绪/危机/代表语句/图
 - `POST /api/search`：事件快照检索
+- `POST /api/suggest_keywords`：基于 LLM 的关键词建议（入参：`{texts: string[], max_keywords?: 3}`）
 - `WS /ws/chat`：实时聊天打标签
 - 健康与指标：`GET /health`，`GET /metrics`（Prometheus）
 
