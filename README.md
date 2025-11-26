@@ -32,13 +32,32 @@ localStorage.setItem('dep_api_key', 'demo-key');
 
 > 如果需要 LLM 关键词建议/种子数据，请确保 `.env` 中配置了 `LLM__BASE_URL`、`LLM__API_KEY`、`LLM__MODEL`，并可调整 `LLM__TIMEOUT_SECONDS`（默认 12）。
 
+## 系统架构
+```
+┌────────────────────┐
+│     Web Frontend   │  Vite + React + Tailwind + Chart.js
+└──────────┬─────────┘
+           │ HTTP/WebSocket
+┌──────────▼─────────┐
+│   FastAPI Gateway   │  REST & WS, CORS, Auth, Rate Limit
+├──────────┬─────────┤
+│ Service Layer       │  analyzer/filter/search orchestrations
+├──────────┼─────────┤
+│ Core Modules        │  NLP heuristics/models, rule engine, keyword suggester (LLM)
+├──────────┬─────────┤
+│ Data Access         │  Repository/DAO (Postgres/SQLite, Redis cache)
+├──────────┴─────────┤
+│ Storage & Assets    │  DB, model registry, rules, logs/metrics
+└────────────────────┘
+```
+
 ## Docker Compose（一键栈：API/前端/Postgres/Redis/Prometheus/Grafana）
 ```bash
 docker compose -f deploy/docker-compose.yml up --build -d
 ```
 默认端口：
 - API: http://localhost:8000
-- 前端: http://localhost:4173
+- 前端: http://localhost:5173
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 （admin/admin）
 
