@@ -1,19 +1,17 @@
-import { useMemo, useState } from "react";
-import { useEventAnalysis } from "../hooks/useEventAnalysis";
+import { useMemo } from "react";
 import { KeywordForm } from "../components/dashboard/KeywordForm";
 import { EmotionTrendChart } from "../components/dashboard/EmotionTrendChart";
 import { RiskSummaryCard } from "../components/dashboard/RiskSummaryCard";
 import { RepresentativeQuotes } from "../components/dashboard/RepresentativeQuotes";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorBanner } from "../components/common/ErrorBanner";
+import { useDashboardState } from "../store/dashboardState";
 
 export function DashboardPage() {
-  const { data, loading, error, analyze } = useEventAnalysis();
-  const [currentKeyword, setCurrentKeyword] = useState("earthquake");
-  const [hours, setHours] = useState(6);
+  const { data, loading, error, keyword, hours, analyze, setKeyword, setHours } = useDashboardState();
 
   const handleSubmit = (keyword: string, selectedHours: number) => {
-    setCurrentKeyword(keyword);
+    setKeyword(keyword);
     setHours(selectedHours);
     analyze(keyword, selectedHours);
   };
@@ -23,9 +21,9 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <KeywordForm keyword={currentKeyword} hours={hours} loading={loading} onSubmit={handleSubmit} />
+      <KeywordForm keyword={keyword} hours={hours} loading={loading} onSubmit={handleSubmit} />
       {error && <ErrorBanner message={error} />}
-      {firstLoad && <LoadingState label="Awaiting keyword" />}
+      {firstLoad && <LoadingState label="等待关键词输入" />}
       {data && (
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-4">

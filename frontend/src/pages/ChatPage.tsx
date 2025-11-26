@@ -30,7 +30,7 @@ export function ChatPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-slate-400">Room</p>
+          <p className="text-xs uppercase tracking-wider text-slate-400">房间</p>
           <p className="text-lg font-semibold text-white">{roomId}</p>
         </div>
         <UserBadge userId={userId} status={status} />

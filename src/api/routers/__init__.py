@@ -6,6 +6,7 @@ from .filter import router as filter_router
 from .event import router as event_router
 from .search import router as search_router
 from .chat import router as chat_router
+from .suggest import router as suggest_router
 
 __all__ = ["register_routes"]
 
@@ -17,3 +18,4 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(event_router, tags=["events"])
     app.include_router(search_router, tags=["search"])
     app.include_router(chat_router, tags=["chat"])
+    app.include_router(suggest_router, tags=["suggest"])

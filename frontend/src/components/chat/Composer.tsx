@@ -20,8 +20,8 @@ export function Composer({ onSend, disabled }: Props) {
       <input
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-white focus:outline-primary"
-        placeholder="Share your thought..."
+        className="flex-1 rounded-md border border-slate-700 bg-slate-950/60 px-3 py-2 text-white focus:outline-primary focus:ring-2 focus:ring-primary/50"
+        placeholder="输入想法，回车发送…"
         disabled={disabled}
       />
       <button

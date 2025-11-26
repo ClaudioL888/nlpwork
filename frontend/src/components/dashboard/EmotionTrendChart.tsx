@@ -39,8 +39,8 @@ export function EmotionTrendChart({ data }: Props) {
     ]
   };
   return (
-    <div className="rounded-lg border border-slate-700/40 bg-slate-900/40 p-4">
-      <h3 className="mb-2 text-sm uppercase tracking-wide text-slate-400">Emotion Trend</h3>
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 shadow-inner shadow-black/20">
+      <h3 className="mb-3 text-sm uppercase tracking-wide text-slate-300">情绪走势</h3>
       <Line data={chartData} options={{ responsive: true, plugins: { legend: { position: "bottom" } } }} />
     </div>
   );

@@ -18,7 +18,7 @@ source .venv/bin/activate
 pip install -e .
 cp .env.example .env    # 在 .env 中填好必要变量，切勿提交真实密钥
 alembic upgrade head    # 默认 SQLite 即可
-uvicorn src.main:app --reload
+uvicorn src.main:app --reload --port 8000
 
 cd frontend
 npm install
@@ -39,6 +39,13 @@ docker compose -f deploy/docker-compose.yml up --build -d
 - 前端: http://localhost:4173
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 （admin/admin）
+
+## 清空并生成示例数据
+本地 SQLite（`data/app.db`）可通过脚本重置并写入演示数据：
+```bash
+python -m scripts.seed_demo_data
+```
+脚本会删除分析/过滤/聊天/事件快照表中的旧数据，然后写入新的分析日志、聊天记录和事件快照（关键词包含 earthquake/storm），便于 Dashboard/Search/Chat 直接查看。
 
 ## 环境变量（.env，请勿提交）
 嵌套字段使用双下划线：

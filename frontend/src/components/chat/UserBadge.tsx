@@ -4,9 +4,9 @@ interface Props {
 }
 
 const statusText: Record<Props["status"], string> = {
-  connecting: "Connecting...",
-  open: "Online",
-  closed: "Disconnected"
+  connecting: "连接中...",
+  open: "在线",
+  closed: "已断开"
 };
 
 const statusColor: Record<Props["status"], string> = {

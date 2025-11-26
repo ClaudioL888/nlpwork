@@ -1,18 +1,22 @@
-import { useEffect } from "react";
 import { SearchBar } from "../components/search/SearchBar";
 import { ResultFilters } from "../components/search/ResultFilters";
 import { Pagination } from "../components/search/Pagination";
 import { ResultCard } from "../components/search/ResultCard";
-import { useSearch } from "../hooks/useSearch";
 import { LoadingState } from "../components/common/LoadingState";
 import { ErrorBanner } from "../components/common/ErrorBanner";
+import { useEffect, useRef } from "react";
+import { useSearchState } from "../store/searchState";
 
 export function SearchPage() {
-  const { keyword, page, sort, loading, error, results, search } = useSearch();
+  const { keyword, page, sort, loading, error, results, search } = useSearchState();
+  const initialized = useRef(false);
 
   useEffect(() => {
-    search();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!initialized.current) {
+      initialized.current = true;
+      search();
+    }
+  }, [search]);
 
   return (
     <div className="space-y-4">
@@ -29,12 +33,12 @@ export function SearchPage() {
         )}
       </div>
       {error && <ErrorBanner message={error} />}
-      {loading && <LoadingState label="Searching" />}
+      {loading && <LoadingState label="检索中" />}
       <div className="grid gap-3">
         {results?.results.map((item) => (
           <ResultCard key={`${item.keyword}-${item.window_start}`} item={item} />
         ))}
-        {!loading && !results?.results.length && <p className="text-sm text-slate-400">No results found.</p>}
+        {!loading && !results?.results.length && <p className="text-sm text-slate-400">暂无结果，尝试修改关键词或时间范围。</p>}
       </div>
     </div>
   );

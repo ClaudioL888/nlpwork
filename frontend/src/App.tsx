@@ -20,13 +20,15 @@ function App() {
       {error && <ErrorBanner message={error} />}
       <div className="flex gap-3 text-sm">
         {[
-          { id: "dashboard", label: "Dashboard" },
-          { id: "chat", label: "Chat" },
-          { id: "search", label: "Search" }
+          { id: "dashboard", label: "总览看板" },
+          { id: "chat", label: "实时聊天" },
+          { id: "search", label: "事件检索" }
         ].map((tab) => (
           <button
             key={tab.id}
-            className={`rounded-md px-4 py-2 ${view === tab.id ? "bg-primary text-white" : "bg-slate-800 text-slate-300"}`}
+            className={`rounded-full px-4 py-2 transition ${
+              view === tab.id ? "bg-primary text-white shadow-lg shadow-primary/30" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+            }`}
             onClick={() => setView(tab.id as typeof view)}
           >
             {tab.label}

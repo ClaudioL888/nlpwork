@@ -12,11 +12,11 @@ const riskColor: Record<string, string> = {
 
 export function ResultCard({ item }: Props) {
   return (
-    <div className="rounded-lg border border-slate-700/40 bg-slate-900/40 p-4">
+    <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 shadow-inner shadow-black/20">
       <div className="flex justify-between text-sm text-slate-300">
         <div>
-          <p className="text-xs uppercase text-slate-500">Keyword</p>
-          <p className="text-lg font-semibold text-white">{item.keyword}</p>
+          <p className="text-xs uppercase text-slate-500">关键词</p>
+          <p className="text-lg font-semibold text-white capitalize">{item.keyword}</p>
         </div>
         <span className={`text-sm font-semibold ${riskColor[item.risk_level] ?? "text-slate-200"}`}>
           {item.risk_level.toUpperCase()}

@@ -17,17 +17,17 @@ export function Pagination({ page, pageSize, total, onChange }: Props) {
         disabled={prevDisabled}
         onClick={() => onChange(page - 1)}
       >
-        Previous
+        上一页
       </button>
       <span>
-        Page {page} / {totalPages}
+        第 {page} / {totalPages} 页
       </span>
       <button
         className="rounded-md border border-slate-600 px-3 py-1 disabled:opacity-50"
         disabled={nextDisabled}
         onClick={() => onChange(page + 1)}
       >
-        Next
+        下一页
       </button>
     </div>
   );
